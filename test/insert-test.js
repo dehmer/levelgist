@@ -31,29 +31,29 @@ describe('Insert', function () {
 
     const db = levelup(encode(memdown(), { valueEncoding: encoding() }))
 
+    const rootkey = Buffer.alloc(16)
     const getNode = async id => new Node(id, await db.get(id))
 
     const getRoot = async () => {
-      const id = await db.get(Buffer.alloc(16))
+      const id = await db.get(rootkey)
       return new Node(id, await db.get(id), true)
     }
 
-    const putNode = async node => {
+    const putNode = async (node, root) => {
       await db.put(node.id, node.buf)
-      if (node.root) await db.put(Buffer.alloc(16), node.id)
+      if (root) await db.put(rootkey, node.id)
       return node
     }
 
     // Create empty root node.
-    await putNode(Node.of(M, uuid.bin(), [], true, true))
+    await putNode(Node.of(M, uuid.bin(), [], true), true)
 
     const context = {
-      db,
       key: () => uuid.bin(),
       createLeaf: (id, entries) => Node.of(M, id, entries, true),
       createNode: (id, entries) => Node.of(M, id, entries, false),
       createEntry: (mbr, id) => Entry.of(mbr, id),
-      createRoot: (id, entries) => Node.of(M, id, entries, false, true),
+      createRoot: (id, entries) => Node.of(M, id, entries, false),
       getRoot,
       getNode,
       putNode
