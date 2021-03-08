@@ -38,4 +38,4 @@ ObjectDown.prototype._del = function (key, options, callback) {
   process.nextTick(callback)
 }
 
-module.exports = ObjectDown
+module.exports = () => new ObjectDown()

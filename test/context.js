@@ -1,12 +1,11 @@
 const uuid = require('uuid-random')
-const { emptyMemdown } = require('./database')
+const database = require('./database')
 const PickSplit = require('../lib/gist/picksplit-nr')
 const Penalty = require('../lib/gist/penalty')
 
 const createContext = async (options = {}) => {
   const M = options.M || 5
   const k = options.k || 0.4
-  const initdb = options.initdb || emptyMemdown
   const type = options.type || 'buffer'
 
   const { Node, Entry } = type === 'buffer'
@@ -14,14 +13,16 @@ const createContext = async (options = {}) => {
     : require('../lib/gist/node-object')
 
   const rootkey = Buffer.alloc(16)
-  const db = await initdb(Node.of(M, uuid.bin(), [], true))
-  const getNode = async id => {
-    if (!Buffer.isBuffer(id)) throw new Error('buffer expected')
-    if (id.length !== 16) throw new Error('unexpected length')
+  const db = database[options.database || 'objectdown']()
 
-    return Node.decode(M, id, await db.get(id))
+  // Creat empty root if necessary:
+  try {
+    await db.get(Buffer.alloc(16))
+  } catch (err) {
+    await database.init(db, Node.of(M, uuid.bin(), [], true))
   }
 
+  const getNode = async id => Node.decode(M, id, await db.get(id))
   const putNode = async (node, root) => {
     await db.put(node.id(), node.encode())
     if (root) await db.put(rootkey, node.id())
