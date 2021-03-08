@@ -27,5 +27,5 @@ const entries = (dataset, n) => new Promise((resolve, reject) => {
 })
 
 module.exports = {
-  entries
+  loadEntries: n => entries('tl_2020_us_county', n)
 }

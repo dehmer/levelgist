@@ -1,8 +1,7 @@
 const assert = require('assert')
 const { PassThrough } = require('stream')
 const { createContext } = require('./context')
-const shapefile = require('./shapefile')
-const { Entry } = require('../lib/gist/node')
+const { loadEntries } = require('./shapefile')
 const Insert = require('../lib/gist/insert')
 const Search = require('../lib/gist/search')
 
@@ -14,49 +13,44 @@ const mbr = entries => entries.reduce((acc, entry) => {
   return acc
 }, [[Infinity, Infinity], [-Infinity, -Infinity]])
 
-const loadEntries = n => shapefile.entries('tl_2020_us_county', n)
-
 describe('Insert', function () {
   const M = 5 // capacity
 
-  it('insert single index entry - root (leaf)', async function () {
+  const load = async entries => {
     const context = await createContext()
     const insert = Insert.bind(context)
-    const entries = await loadEntries(1)
-    for(const entry of entries) await insert(Entry.encode(entry))
+    for (const entry of entries) await insert(entry)
+    return context
+  }
 
+  it('insert single index entry - root (leaf)', async function () {
+    const entries = await loadEntries(1)
+    const context = await load(entries)
     const R = await context.getRoot()
     assert.strictEqual(R.length(), 1)
-    assert.deepStrictEqual(Entry.decodeMBR(R.mbr()), mbr(entries))
+    assert.deepStrictEqual(R.mbr().decode(), mbr(entries))
   })
 
   it('fill node to capacity - root (leaf)', async function () {
-    const context = await createContext()
-    const insert = Insert.bind(context)
     const entries = await loadEntries(M)
-    for(const entry of entries) await insert(Entry.encode(entry))
-
+    const context = await load(entries)
     const R = await context.getRoot()
     assert.strictEqual(R.length(), M)
-    assert.deepStrictEqual(Entry.decodeMBR(R.mbr()), mbr(entries))
+    assert.deepStrictEqual(R.mbr().decode(), mbr(entries))
   })
 
   it('split leaf (root)', async function () {
-    const context = await createContext()
-    const insert = Insert.bind(context)
     const entries = await loadEntries(M + 1)
-    for(const entry of entries) await insert(Entry.encode(entry))
+    const context = await load(entries)
     const key = await context.root()
     const R = await context.getNode(key)
     assert.strictEqual(R.length(), 2)
-    assert.deepStrictEqual(Entry.decodeMBR(R.mbr()), mbr(entries))
+    assert.deepStrictEqual(R.mbr().decode(), mbr(entries))
   })
 
   it('find leaf to insert entry', async function () {
-    const context = await createContext()
-    const insert = Insert.bind(context)
     const entries = await loadEntries(M + 2)
-    for(const entry of entries) await insert(Entry.encode(entry))
+    const context = await load(entries)
     const R = await context.getRoot()
     assert.strictEqual(R.length(), 2)
 
@@ -65,41 +59,33 @@ describe('Insert', function () {
   })
 
   it('split leaf (non-root)', async function () {
-    const context = await createContext()
-    const insert = Insert.bind(context)
     const entries = await loadEntries(M + 4)
-    for(const entry of entries) await insert(Entry.encode(entry))
+    const context = await load(entries)
     const R = await context.getRoot()
     assert.strictEqual(R.length(), 3)
   })
 
   it('delegate split (non-leaf)', async function () {
-    const context = await createContext()
-    const insert = Insert.bind(context)
     const entries = await loadEntries(M + 11)
-    for(const entry of entries) await insert(Entry.encode(entry))
+    const context = await load(entries)
     const R = await context.getRoot()
     assert.strictEqual(R.length(), 2)
-    assert.deepStrictEqual(Entry.decodeMBR(R.mbr()), mbr(entries))
+    assert.deepStrictEqual(R.mbr().decode(), mbr(entries))
   })
 
   it('delegate MBR update after split', async function () {
-    const context = await createContext()
-    const insert = Insert.bind(context)
     const entries = await loadEntries(M + 71)
-    for(const entry of entries) await insert(Entry.encode(entry))
+    const context = await load(entries)
     const R = await context.getRoot()
 
     // NOTE: M + 71 is the first entry which changes root MBR.
-    assert.deepStrictEqual(Entry.decodeMBR(R.mbr()), mbr(entries))
+    assert.deepStrictEqual(R.mbr().decode(), mbr(entries))
   })
 
   it('search single index entry', async function () {
-    const context = await createContext()
-    const insert = Insert.bind(context)
-    const search = Search.bind(context)
     const entries = await loadEntries(50)
-    for(const entry of entries) await insert(Entry.encode(entry))
+    const context = await load(entries)
+    const search = Search.bind(context)
     const R = await context.getRoot()
 
     const result = S => new Promise(async (resolve, reject) => {
@@ -109,7 +95,8 @@ describe('Insert', function () {
       writable.end()
 
       writable
-        .on('data', data => acc.push(Entry.decodeId(data)))
+        .on('data', data => acc.push(data))
+        .on('error', err => reject(err))
         .on('end', () => resolve(acc))
     })
 

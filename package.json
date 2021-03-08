@@ -10,6 +10,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "abstract-leveldown": "^6.3.0",
     "encoding-down": "^6.3.0",
     "leveldown": "^5.6.0",
     "levelup": "^4.4.0",
