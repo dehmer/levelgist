@@ -13,7 +13,11 @@ const createContext = async (options = {}) => {
     : require('../lib/gist/node-object')
 
   const rootkey = Buffer.alloc(16)
-  const db = database[options.database || 'objectdown']()
+  const codec = options.stats
+    ? database.statsCodec(options.stats)
+    : database.defaultCodec
+
+  const db = database[options.database || 'objectdown'](codec)
 
   // Creat empty root if necessary:
   try {
