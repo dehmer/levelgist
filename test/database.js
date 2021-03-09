@@ -1,8 +1,9 @@
+const uuid = require('uuid-random')
 const levelup = require('levelup')
 const memdown = require('memdown')
 const leveldown = require('leveldown')
-const objectdown = require('./objectdown')
 const encode = require('encoding-down')
+const objectdown = require('./objectdown')
 
 const init = async (db, root) => {
   const id = root.id()
@@ -36,5 +37,5 @@ module.exports = {
   defaultCodec,
   memdown: codec => levelup(codec(memdown())),
   objectdown: codec => levelup(codec(objectdown())),
-  leveldown: codec => levelup(codec(leveldown('db/index')))
+  leveldown: codec => levelup(codec(leveldown(`db/${uuid()}`)))
 }

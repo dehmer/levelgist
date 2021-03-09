@@ -1,0 +1,6 @@
+buffer, memdown, 3234, 50, 0.4, 8232, 18.9 MB, 11360, 18.7 MB, 640
+buffer, objectdown, 3234, 50, 0.4, 8232, 18.9 MB, 11360, 18.7 MB, 167
+buffer, leveldown, 3234, 50, 0.4, 8232, 18.9 MB, 11360, 18.7 MB, 770
+object, memdown, 3234, 50, 0.4, 8232, 22.5 MB, 11360, 22.2 MB, 1314
+object, objectdown, 3234, 50, 0.4, 8232, 22.5 MB, 11360, 22.2 MB, 795
+object, leveldown, 3234, 50, 0.4, 8232, 22.5 MB, 11360, 22.2 MB, 1454
