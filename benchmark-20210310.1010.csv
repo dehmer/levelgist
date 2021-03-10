@@ -1,0 +1,5 @@
+# bulk insert, caching reads
+buffer, memdown, 3234, 50, 0.4, 8232, 18.9 MB, 2, 2.4 kB, 190ms (-450ms)
+buffer, leveldown, 3234, 50, 0.4, 8232, 18.9 MB, 2, 2.4 kB, 340ms (-430ms)
+object, memdown, 3234, 50, 0.4, 8232, 22.5 MB, 2, 42 Bytes, 924ms (-390ms)
+object, leveldown, 3234, 50, 0.4, 8232, 22.5 MB, 2, 42 Bytes, 980ms (-474ms)

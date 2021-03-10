@@ -38,4 +38,8 @@ ObjectDown.prototype._del = function (key, options, callback) {
   process.nextTick(callback)
 }
 
+ObjectDown.prototype._batch = function () {
+  throw new Error('unsupported')
+}
+
 module.exports = () => new ObjectDown()

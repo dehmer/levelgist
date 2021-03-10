@@ -18,8 +18,8 @@ describe('Insert', function () {
 
   const load = async entries => {
     const context = await createContext()
-    const insert = Insert.bind(context)
-    for (const entry of entries) await insert(entry)
+    // const insert = Insert.bind(context)
+    for (const entry of entries) await context.insert(entry)
     return context
   }
 

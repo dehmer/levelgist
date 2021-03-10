@@ -31,7 +31,8 @@ describe.only('benchmark', async function () {
   })
 
   const setups = ['buffer', 'object']
-    .flatMap(type => ['memdown', 'objectdown', 'leveldown']
+    // .flatMap(type => ['memdown', 'objectdown', 'leveldown']
+    .flatMap(type => ['memdown', 'leveldown']
       .map(database => [type, database])
     )
 
@@ -43,10 +44,11 @@ describe.only('benchmark', async function () {
       const k = 0.4
       const stats = { type, database, n: entries.length, M, k, writes: 0, bytesWritten: 0, reads: 0, bytesRead: 0 }
       const context = await createContext({ M, k, database, type, stats })
-      const insert = Insert.bind(context)
+      // const insert = Insert.bind(context)
 
       const now = Date.now()
-      for(const entry of entries) await insert(entry)
+      // for(const entry of entries) await context.insert(entry)
+      await context.bulk(entries)
       stats.time = Date.now() - now
       acc.push(stats)
     })
