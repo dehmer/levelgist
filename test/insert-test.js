@@ -1,9 +1,6 @@
 const assert = require('assert')
-const { PassThrough } = require('stream')
 const { createContext } = require('./context')
 const { loadEntries } = require('./shapefile')
-const Insert = require('../lib/gist/insert')
-const Search = require('../lib/gist/search')
 
 const mbr = entries => entries.reduce((acc, entry) => {
   if (entry.mbr[0][0] < acc[0][0]) acc[0][0] = entry.mbr[0][0]
@@ -18,8 +15,8 @@ describe('Insert', function () {
 
   const load = async entries => {
     const context = await createContext()
-    // const insert = Insert.bind(context)
-    for (const entry of entries) await context.insert(entry)
+    // for (const entry of entries) await context.insert(entry)
+    await context.bulk(entries)
     return context
   }
 
@@ -85,23 +82,8 @@ describe('Insert', function () {
   it('search single index entry', async function () {
     const entries = await loadEntries(50)
     const context = await load(entries)
-    const search = Search.bind(context)
-    const R = await context.getRoot()
-
-    const result = S => new Promise(async (resolve, reject) => {
-      const acc = []
-      const writable = new PassThrough({ objectMode: true })
-      await search(R, S, writable)
-      writable.end()
-
-      writable
-        .on('data', data => acc.push(data))
-        .on('error', err => reject(err))
-        .on('end', () => resolve(acc))
-    })
-
     const S = entries[20].mbr
-    const hits = await result(S)
+    const hits = await context.search(S)
     assert.strictEqual(hits.length, 1)
     assert.strictEqual(hits[0], entries[20].id)
   })

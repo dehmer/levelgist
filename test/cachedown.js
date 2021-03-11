@@ -22,23 +22,22 @@ CacheDown.prototype._serializeKey = function (key) {
 
 CacheDown.prototype._put = function (key, value, options, callback) {
   // console.log('[CacheDown] _put', key, value)
-  this._store[key.toString('hex')] = value
+  this._store[key] = value
   process.nextTick(callback)
 }
 
 CacheDown.prototype._get = function (key, options, callback) {
   // console.log('[CacheDown] _get', key, options, callback)
-  const encodedKey = key.toString('hex')
-  const value = this._store[encodedKey]
+  const value = this._store[key]
   if (value) return process.nextTick(callback, null, value)
   this.backend_.get(key).then(value => {
-    this._store[encodedKey] = value
+    this._store[key] = value
     process.nextTick(callback, null, value)
   })
 }
 
 CacheDown.prototype._del = function (key, options, callback) {
-  delete this._store[encodedKey]
+  delete this._store[key]
   process.nextTick(callback)
 }
 

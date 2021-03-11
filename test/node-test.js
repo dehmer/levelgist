@@ -1,13 +1,11 @@
 const assert = require('assert')
 const uuid = require('uuid-random')
-const nodeBuffer = require('../lib/gist/node-buffer')
-const nodeObject = require('../lib/gist/node-object')
+const node = require('../lib/gist/node')
 
 describe('object class compliance', function () {
 
   const classes = [
-    ['buffer', nodeBuffer],
-    ['object', nodeObject]
+    ['object', node]
   ]
 
   classes.forEach(([type, { MBR, Entry, Node }]) => {

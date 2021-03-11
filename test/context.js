@@ -1,3 +1,4 @@
+const { PassThrough } = require('stream')
 const uuid = require('uuid-random')
 const levelup = require('levelup')
 const database = require('./database')
@@ -5,28 +6,23 @@ const CacheDown = require('./cachedown')
 const PickSplit = require('../lib/gist/picksplit-nr')
 const Penalty = require('../lib/gist/penalty')
 const Insert = require('../lib/gist/insert')
+const Search = require('../lib/gist/search')
 
 const createContext = async (options = {}) => {
   const M = options.M || 5
   const k = options.k || 0.4
-  const type = options.type || 'buffer'
 
-  const { Node, Entry } = type === 'buffer'
-    ? require('../lib/gist/node-buffer')
-    : require('../lib/gist/node-object')
-
-  const rootkey = Buffer.alloc(16)
-  const codec = options.stats
-    ? database.statsCodec(options.stats)
-    : database.defaultCodec
-
-  const db = database[options.database || 'memdown'](codec)
+  const rootkey = '00000000-0000-0000-0000-000000000000'
+  const { Node, Entry } = require('../lib/gist/node')
+  const db = database[options.database || 'memdown/json']()
 
   // Create empty root if necessary:
   try {
-    await db.get(Buffer.alloc(16))
+    await db.get(rootkey)
   } catch (err) {
-    await database.init(db, Node.of(M, uuid.bin(), [], true))
+    const root = Node.of(M, uuid(), [], true)
+    await db.put(rootkey, root.id())
+    await db.put(root.id(), root.encode())
   }
 
   let batch
@@ -40,7 +36,7 @@ const createContext = async (options = {}) => {
   }
 
   const context = {
-    key: () => uuid.bin(),
+    key: () => uuid(),
     root: () => db.get(rootkey),
     createLeaf: (id, entries) => Node.of(M, id, entries, true),
     createNode: (id, entries) => Node.of(M, id, entries, false),
@@ -63,12 +59,12 @@ const createContext = async (options = {}) => {
 
   context.bulk = async entries => {
     const cache = levelup(CacheDown(db))
-    const batch = db.batch()
+    const puts = {}
     const getNode = async id => Node.decode(M, id, await cache.get(id))
 
     const put = (key, value) => {
       // TODO: overwrite existing entry
-      batch.put(key, value)
+      puts[key] = value
       cache.put(key, value)
     }
 
@@ -79,7 +75,7 @@ const createContext = async (options = {}) => {
     }
 
     const context = {
-      key: () => uuid.bin(),
+      key: () => uuid(),
       root: () => cache.get(rootkey),
       createLeaf: (id, entries) => Node.of(M, id, entries, true),
       createNode: (id, entries) => Node.of(M, id, entries, false),
@@ -94,8 +90,22 @@ const createContext = async (options = {}) => {
     context.penalty = (options.Penalty || Penalty).bind(context)
     const insert = Insert.bind(context)
     for(const entry of entries) await insert(entry)
+    const batch = Object.entries(puts).reduce((acc, [k, v]) => acc.put(k, v), db.batch())
     await batch.write()
   }
+
+  context.search = S => new Promise(async (resolve, reject) => {
+    const acc = []
+    const writable = new PassThrough({ objectMode: true })
+    const R = await context.getRoot()
+    await Search.bind(context)(R, S, writable)
+    writable.end()
+
+    writable
+      .on('data', data => acc.push(data))
+      .on('error', err => reject(err))
+      .on('end', () => resolve(acc))
+  })
 
   return context
 }
