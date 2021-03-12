@@ -100,22 +100,21 @@ describe('object class compliance', function () {
     describe(`Node (${type})`, function () {
       it('#of', function () {
         const id = uuid.bin()
-        const node = Node.of(9, id, [], true)
-        assert.strictEqual(node.capacity(), 9)
+        const node = Node.of(id, [], true)
         assert.strictEqual(node.id(), id)
         assert.deepStrictEqual(node.length(), 0)
         assert.strictEqual(node.leaf(), true)
       })
 
       it('#add', function () {
-        const node = Node.of(9, uuid.bin(), [], true)
+        const node = Node.of(uuid.bin(), [], true)
         const entry = Entry.encode({ mbr: [[0, 5], [10, 15]], id: uuid() })
         node.add([entry])
         assert.deepStrictEqual(node.length(), 1)
       })
 
       it('#entries', function () {
-        const node = Node.of(9, uuid.bin(), [], true)
+        const node = Node.of(uuid.bin(), [], true)
         const expected = { mbr: [[0, 5], [10, 15]], id: uuid() }
         const entry = Entry.encode(expected)
         node.add([entry])

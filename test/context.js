@@ -20,13 +20,13 @@ const createContext = async (options = {}) => {
   try {
     await db.get(rootkey)
   } catch (err) {
-    const root = Node.of(M, uuid(), [], true)
+    const root = Node.of(uuid(), [], true)
     await db.put(rootkey, root.id())
     await db.put(root.id(), root.encode())
   }
 
   let batch
-  const getNode = async id => Node.decode(M, id, await db.get(id))
+  const getNode = async id => Node.decode(id, await db.get(id))
 
   const putNode = async (node, root) => {
     const backend = batch ? batch : db
@@ -38,8 +38,8 @@ const createContext = async (options = {}) => {
   const context = {
     key: () => uuid(),
     root: () => db.get(rootkey),
-    createLeaf: (id, entries) => Node.of(M, id, entries, true),
-    createNode: (id, entries) => Node.of(M, id, entries, false),
+    createLeaf: (id, entries) => Node.of(id, entries, true),
+    createNode: (id, entries) => Node.of(id, entries, false),
     createEntry: (mbr, id) => Entry.of(mbr, id),
     encodeEntry: entry => Entry.encode(entry),
     getRoot: async () => getNode(await db.get(rootkey)), // convenience only
@@ -52,7 +52,7 @@ const createContext = async (options = {}) => {
 
   context.insert = async entry => {
     batch = db.batch()
-    await Insert.bind(context)(entry)
+    await Insert(M).bind(context)(entry)
     await batch.write()
     batch = null
   }
@@ -60,7 +60,7 @@ const createContext = async (options = {}) => {
   context.bulk = async entries => {
     const cache = levelup(CacheDown(db))
     const puts = {}
-    const getNode = async id => Node.decode(M, id, await cache.get(id))
+    const getNode = async id => Node.decode(id, await cache.get(id))
 
     const put = (key, value) => {
       // TODO: overwrite existing entry
@@ -77,8 +77,8 @@ const createContext = async (options = {}) => {
     const context = {
       key: () => uuid(),
       root: () => cache.get(rootkey),
-      createLeaf: (id, entries) => Node.of(M, id, entries, true),
-      createNode: (id, entries) => Node.of(M, id, entries, false),
+      createLeaf: (id, entries) => Node.of(id, entries, true),
+      createNode: (id, entries) => Node.of(id, entries, false),
       createEntry: (mbr, id) => Entry.of(mbr, id),
       encodeEntry: entry => Entry.encode(entry),
       getRoot: async () => getNode(await cache.get(rootkey)), // convenience only
@@ -88,7 +88,7 @@ const createContext = async (options = {}) => {
 
     context.pickSplit = (options.PickSplit || PickSplit(k)).bind(context)
     context.penalty = (options.Penalty || Penalty).bind(context)
-    const insert = Insert.bind(context)
+    const insert = Insert(M).bind(context)
     for(const entry of entries) await insert(entry)
     const batch = Object.entries(puts).reduce((acc, [k, v]) => acc.put(k, v), db.batch())
     await batch.write()
