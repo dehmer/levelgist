@@ -4,8 +4,8 @@ const { decode } = require('../lib/shapefile/shapefile')
 
 const entry = ({ box }) => {
   return {
-    mbr: [[box.xmin, box.ymin], [box.xmax, box.ymax]],
-    id: uuid()
+    box: [[box.xmin, box.ymin], [box.xmax, box.ymax]],
+    key: uuid()
   }
 }
 

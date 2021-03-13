@@ -1,11 +1,14 @@
-const {loadEntries} = require('./shapefile')
-const { createContext } = require('./context')
+const gist = require('../lib/gist')
+const { loadEntries } = require('./shapefile')
+const database = require('./database')
 
 ;(async () => {
-  const database = 'memdown/json'
-  const type = 'object'
-  const context = await createContext({ M: 50, k: 0.5, database, type })
+  const M = 50
+  const k = 0.5
+  const createIndex = () => gist(database['memdown/json'](), { M, k })
+  const index = await createIndex()
   const entries = await loadEntries()
-  await context.bulk(entries)
-  // for (const entry of entries) await context.insert(entry)
-})()
+  console.time('bulk')
+  await index.bulk(entries)
+  console.timeEnd('bulk')
+})
