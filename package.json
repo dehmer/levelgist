@@ -1,4 +1,5 @@
 {
+  "id": "6d59032c-ab7c-4a8a-9def-5522929a91b3",
   "name": "levelgist",
   "version": "0.0.0",
   "description": "Generalized Search Tree (GiST) for LevelDB",
